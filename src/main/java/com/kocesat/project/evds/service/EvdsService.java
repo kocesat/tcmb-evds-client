@@ -1,10 +1,10 @@
 package com.kocesat.project.evds.service;
 
-import com.kocesat.project.evds.model.Todo;
+import com.kocesat.project.evds.model.EvdsItem;
 
 import java.time.LocalDate;
 import java.util.List;
 
 public interface EvdsService {
-    List<Todo> getUsdRateFor(LocalDate date);
+    List<EvdsItem> getUsdRateFor(LocalDate start, LocalDate end);
 }

@@ -1,9 +1,8 @@
 package com.kocesat.project.evds.service.impl;
 
-import com.kocesat.project.evds.model.Todo;
+import com.kocesat.project.evds.model.EvdsItem;
+import com.kocesat.project.evds.model.EvdsResponseDocument;
 import com.kocesat.project.evds.service.EvdsService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
@@ -13,28 +12,35 @@ import java.util.List;
 
 @Service
 public class EvdsServiceImpl implements EvdsService {
-    @Qualifier("todoWebClient")
-    @Autowired
-    private WebClient todoWebClient;
+
+    private static final String API_ANAHTAR = "vtXDLYTlxd";
+    private final WebClient evdsWebClient;
+
+    public EvdsServiceImpl(WebClient evdsWebClient) {
+        this.evdsWebClient = evdsWebClient;
+    }
 
     private final static String USD_CODE = "TP.DK.USD.A";
     private final static String EUR_CODE = "TP.DK.EUR.A";
-    private final static String API_DATE_FORMAT = "dd-MM-YYYY";
+    private final static String API_DATE_FORMAT = "dd-MM-yyyy";
 
     @Override
-    public List<Todo> getUsdRateFor(LocalDate date) {
-        return getRateFor(USD_CODE, date);
+    public List<EvdsItem> getUsdRateFor(LocalDate start, LocalDate end) {
+        final EvdsResponseDocument evdsResponseDocument = getRateFor(USD_CODE, start, end);
+        return evdsResponseDocument.getItems();
     }
 
-    private List<Todo> getRateFor(String code, LocalDate date) {
-        String formattedDate = date.format(DateTimeFormatter.ofPattern(API_DATE_FORMAT));
-        String uri = "/todos";
-        return todoWebClient
+    private EvdsResponseDocument getRateFor(String code, LocalDate start, LocalDate end) {
+        String uri = String.format("/series=%s&startDate=%s&endDate=%s&type=xml&key=%s", code, format(start), format(end), API_ANAHTAR);
+        return evdsWebClient
                 .get()
                 .uri(uri)
                 .retrieve()
-                .bodyToFlux(Todo.class)
-                .collectList()
+                .bodyToMono(EvdsResponseDocument.class)
                 .block();
+    }
+
+    private String format(LocalDate date) {
+        return date.format(DateTimeFormatter.ofPattern(API_DATE_FORMAT));
     }
 }
